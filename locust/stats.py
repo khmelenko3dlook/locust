@@ -1106,7 +1106,7 @@ class StatsCSVFileWriter(StatsCSV):
         if self.full_history:
             stats_entries = sort_stats(stats.entries)
 
-        for stats_entry in chain(stats_entries, [stats.total]):
+        for stats_entry in chain(stats_entries, [stats.total], [stats.measurement]):
             csv_writer.writerow(
                 chain(
                     (
