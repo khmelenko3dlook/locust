@@ -267,6 +267,7 @@ class RequestStats:
         Remove all stats entries and errors
         """
         self.total = StatsEntry(self, "Aggregated", "", use_response_times_cache=self.use_response_times_cache)
+        self.measurement = StatsEntry(self, "Measurement Flow", "", use_response_times_cache=self.use_response_times_cache)
         self.entries = {}
         self.errors = {}
         self.history = []
@@ -952,7 +953,7 @@ class StatsCSV:
     def _requests_data_rows(self, csv_writer: CSVWriter) -> None:
         """Write requests csv data row, excluding header."""
         stats = self.environment.stats
-        for stats_entry in chain(sort_stats(stats.entries), [stats.total]):
+        for stats_entry in chain(sort_stats(stats.entries), [stats.total], [stats.measurement]):
             csv_writer.writerow(
                 chain(
                     [
