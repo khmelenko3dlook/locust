@@ -1020,6 +1020,9 @@ class StatsCSVFileWriter(StatsCSV):
         self.stats_history_csv_filehandle = open(self.stats_history_file_name(), "w")
         self.stats_history_csv_writer = csv.writer(self.stats_history_csv_filehandle)
 
+        self.flow_history_csv_filehandle = open(self.flow_stats_history_file_name(), "w")
+        self.flow_history_csv_writer = csv.writer(self.flow_history_csv_filehandle)
+
         self.failures_csv_filehandle = open(self.base_filepath + "_failures.csv", "w")
         self.failures_csv_writer = csv.writer(self.failures_csv_filehandle)
         self.failures_csv_data_start: int = 0
@@ -1044,6 +1047,7 @@ class StatsCSVFileWriter(StatsCSV):
             "Total Max Response Time",
             "Total Average Content Size",
         ]
+        self.flow_history_csv_columns = self.stats_history_csv_columns.copy()
 
     def __call__(self) -> None:
         self.stats_writer()
@@ -1056,6 +1060,8 @@ class StatsCSVFileWriter(StatsCSV):
         requests_csv_data_start = self.requests_csv_filehandle.tell()
 
         self.stats_history_csv_writer.writerow(self.stats_history_csv_columns)
+
+        self.flow_history_csv_writer.writerow(self.flow_history_csv_columns)
 
         self.failures_csv_writer.writerow(self.failures_columns)
         self.failures_csv_data_start = self.failures_csv_filehandle.tell()
@@ -1072,6 +1078,7 @@ class StatsCSVFileWriter(StatsCSV):
             self._requests_data_rows(self.requests_csv_writer)
             self.requests_csv_filehandle.truncate()
 
+            self._stats_history_data_rows(self.stats_history_csv_writer, now)
             self._stats_history_data_rows(self.stats_history_csv_writer, now)
 
             self.failures_csv_filehandle.seek(self.failures_csv_data_start)
@@ -1130,6 +1137,34 @@ class StatsCSVFileWriter(StatsCSV):
                 )
             )
 
+    def _flow_history_data_rows(self, csv_writer: CSVWriter, now: float) -> None:
+        stats = self.environment.stats
+        timestamp = int(now)
+
+        for stats_entry in chain([stats.measurement]):
+            csv_writer.writerow(
+                chain(
+                    (
+                        timestamp,
+                        self.environment.runner.user_count if self.environment.runner is not None else 0,
+                        stats_entry.method or "",
+                        stats_entry.name,
+                        f"{stats_entry.current_rps:2f}",
+                        f"{stats_entry.current_fail_per_sec:2f}",
+                    ),
+                    self._percentile_fields(stats_entry),
+                    (
+                        stats_entry.num_requests,
+                        stats_entry.num_failures,
+                        stats_entry.median_response_time,
+                        stats_entry.avg_response_time,
+                        stats_entry.min_response_time or 0,
+                        stats_entry.max_response_time,
+                        stats_entry.avg_content_length,
+                    ),
+                )
+            )
+
     def requests_flush(self) -> None:
         self.requests_csv_filehandle.flush()
 
@@ -1150,3 +1185,6 @@ class StatsCSVFileWriter(StatsCSV):
 
     def stats_history_file_name(self) -> str:
         return self.base_filepath + "_stats_history.csv"
+
+    def flow_stats_history_file_name(self) -> str:
+        return self.base_filepath + "flow_stats_history.csv"
