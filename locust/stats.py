@@ -1079,7 +1079,8 @@ class StatsCSVFileWriter(StatsCSV):
             self.requests_csv_filehandle.truncate()
 
             self._stats_history_data_rows(self.stats_history_csv_writer, now)
-            self._stats_history_data_rows(self.stats_history_csv_writer, now)
+
+            self._flow_history_data_rows(self.flow_history_csv_writer, now)
 
             self.failures_csv_filehandle.seek(self.failures_csv_data_start)
             self._failures_data_rows(self.failures_csv_writer)
@@ -1187,4 +1188,4 @@ class StatsCSVFileWriter(StatsCSV):
         return self.base_filepath + "_stats_history.csv"
 
     def flow_stats_history_file_name(self) -> str:
-        return self.base_filepath + "flow_stats_history.csv"
+        return self.base_filepath + "_flow_stats_history.csv"
