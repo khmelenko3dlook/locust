@@ -203,6 +203,7 @@ class RequestStats:
         self.entries: Dict[Tuple[str, str], StatsEntry] = {}
         self.errors: Dict[str, StatsError] = {}
         self.total = StatsEntry(self, "Aggregated", None, use_response_times_cache=self.use_response_times_cache)
+        self.measurement = StatsEntry(self, "Measurement Flow", None, use_response_times_cache=self.use_response_times_cache)
         self.history = []
 
     @property
@@ -809,6 +810,7 @@ def get_stats_summary(stats: RequestStats, current=True) -> List[str]:
         summary.append(r.to_string(current=current))
     summary.append(separator)
     summary.append(stats.total.to_string(current=current))
+    summary.append(stats.measurement.to_string(current=current))
     return summary
 
 
@@ -843,6 +845,7 @@ def get_percentile_stats_summary(stats: RequestStats) -> List[str]:
 
     if stats.total.response_times:
         summary.append(stats.total.percentile())
+        summary.append(stats.measurement.percentile())
     return summary
 
 
