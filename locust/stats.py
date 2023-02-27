@@ -204,6 +204,7 @@ class RequestStats:
         self.errors: Dict[str, StatsError] = {}
         self.total = StatsEntry(self, "Aggregated", None, use_response_times_cache=self.use_response_times_cache)
         self.measurement = StatsEntry(self, "Measurement Flow", None, use_response_times_cache=self.use_response_times_cache)
+        self.tryon = StatsEntry(self, "Tryon Flow", None, use_response_times_cache=self.use_response_times_cache)
         self.history = []
 
     @property
@@ -268,6 +269,7 @@ class RequestStats:
         """
         self.total = StatsEntry(self, "Aggregated", "", use_response_times_cache=self.use_response_times_cache)
         self.measurement = StatsEntry(self, "Measurement Flow", "", use_response_times_cache=self.use_response_times_cache)
+        self.tryon = StatsEntry(self, "Tryon Flow", "", use_response_times_cache=self.use_response_times_cache)
         self.entries = {}
         self.errors = {}
         self.history = []
@@ -812,6 +814,7 @@ def get_stats_summary(stats: RequestStats, current=True) -> List[str]:
     summary.append(separator)
     summary.append(stats.total.to_string(current=current))
     summary.append(stats.measurement.to_string(current=current))
+    summary.append(stats.tryon.to_string(current=current))
     return summary
 
 
@@ -847,6 +850,7 @@ def get_percentile_stats_summary(stats: RequestStats) -> List[str]:
     if stats.total.response_times:
         summary.append(stats.total.percentile())
         summary.append(stats.measurement.percentile())
+        summary.append(stats.tryon.percentile())
     return summary
 
 
@@ -953,7 +957,7 @@ class StatsCSV:
     def _requests_data_rows(self, csv_writer: CSVWriter) -> None:
         """Write requests csv data row, excluding header."""
         stats = self.environment.stats
-        for stats_entry in chain(sort_stats(stats.entries), [stats.total], [stats.measurement]):
+        for stats_entry in chain(sort_stats(stats.entries), [stats.total], [stats.measurement], [stats.tryon]):
             csv_writer.writerow(
                 chain(
                     [
@@ -1114,7 +1118,7 @@ class StatsCSVFileWriter(StatsCSV):
         if self.full_history:
             stats_entries = sort_stats(stats.entries)
 
-        for stats_entry in chain(stats_entries, [stats.total], [stats.measurement]):
+        for stats_entry in chain(stats_entries, [stats.total], [stats.measurement], [stats.tryon]):
             csv_writer.writerow(
                 chain(
                     (
@@ -1142,7 +1146,7 @@ class StatsCSVFileWriter(StatsCSV):
         stats = self.environment.stats
         timestamp = int(now)
 
-        for stats_entry in chain([stats.measurement]):
+        for stats_entry in chain([stats.measurement], [stats.tryon]):
             csv_writer.writerow(
                 chain(
                     (
